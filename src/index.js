@@ -8,7 +8,8 @@ export function install (Vue) {
 
 // Expose the components
 export {
-  CircleSlider
+  CircleSlider,
+  CircleSliderLimit
   /* -- Add more components here -- */
 }
 
