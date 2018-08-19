@@ -1,4 +1,5 @@
 import CircleSlider from './components/CircleSlider.vue'
+import CircleSliderLimit from './components/CircleSliderLimit.js'
 
 // Install the components
 export function install (Vue) {
@@ -8,7 +9,8 @@ export function install (Vue) {
 
 // Expose the components
 export {
-  CircleSlider
+  CircleSlider,
+  CircleSliderLimit
   /* -- Add more components here -- */
 }
 
