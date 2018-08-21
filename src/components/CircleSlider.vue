@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <span>
         <svg :width="side + 'px'" :height="side + 'px'" :viewBox="'0 0 ' + side + ' ' + side" ref="_svg"
              @touchmove="handleTouchMove"
              @click="handleClick"
@@ -15,7 +15,7 @@
                 <circle :fill="knobColor" :r="cpKnobRadius" :cx="cpPathX" :cy="cpPathY"></circle>
             </g>
         </svg>
-    </div>
+    </span>
 </template>
 <script>
   import TouchPosition from '../modules/touch_position.js'
