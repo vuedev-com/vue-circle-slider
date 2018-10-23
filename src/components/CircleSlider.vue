@@ -46,10 +46,9 @@ export default {
         return 0
       }
     },
-    textValue:{
-      type:String,
-      required:false,
-      
+    textValue: {
+      type: String,
+      required: false
     },
     value: {
       type: Number,
