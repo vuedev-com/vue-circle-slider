@@ -9,6 +9,7 @@
       <g>
         <circle :stroke="circleColor" fill="none" :stroke-width="cpMainCircleStrokeWidth" :cx="cpCenter" :cy="cpCenter" :r="radius"></circle>
         <path :stroke="progressColor" fill="none" :stroke-width="cpPathStrokeWidth" :d="cpPathD"></path>
+        <text xmlns="http://www.w3.org/2000/svg" x="50%" y="50%" text-anchor="middle" stroke="#51c5cf" stroke-width="0px" dy=".3em" style="&#10;    font-size: 50px;&#10;">{{textValue}}</text>
         <circle :fill="knobColor" :r="cpKnobRadius" :cx="cpPathX" :cy="cpPathY"></circle>
       </g>
     </svg>
@@ -44,6 +45,11 @@ export default {
         // return Math.PI / 20
         return 0
       }
+    },
+    textValue:{
+      type:String,
+      required:false,
+      
     },
     value: {
       type: Number,
