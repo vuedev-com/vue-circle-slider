@@ -257,12 +257,13 @@ export default {
 
     /*
      */
-    updateAngle (angle) {
+    updateAngle (angle, isemit = true) {
       this.circleSliderState.updateCurrentStepFromAngle(angle)
       this.angle = this.circleSliderState.angleValue
       this.currentStepValue = this.circleSliderState.currentStep
-
-      this.$emit('input', this.currentStepValue)
+      if (isemit) {
+        this.$emit('input', this.currentStepValue)
+      }
     },
 
     /*
@@ -293,10 +294,10 @@ export default {
 
       const animate = () => {
         if (Math.abs(endAngle - startAngle) < Math.abs(2 * curveAngleMovementUnit)) {
-          this.updateAngle(endAngle)
+          this.updateAngle(endAngle, true)
         } else {
           const newAngle = startAngle + curveAngleMovementUnit
-          this.updateAngle(newAngle)
+          this.updateAngle(newAngle, false)
           this.animateSlider(newAngle, endAngle)
         }
       }
