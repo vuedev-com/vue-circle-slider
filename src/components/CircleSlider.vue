@@ -29,10 +29,9 @@ export default {
     this.angle = this.circleSliderState.angleValue
     this.currentStepValue = this.circleSliderState.currentStep
 
-    let maxCurveWidth = Math.max(this.cpMainCircleStrokeWidth, this.cpPathStrokeWidth)
-    this.radius = (this.side / 2) - Math.max(maxCurveWidth, this.cpKnobRadius * 2) / 2
     this.updateFromPropValue(this.value)
   },
+
   mounted () {
     this.touchPosition = new TouchPosition(this.$refs._svg, this.radius, this.radius / 2)
   },
@@ -130,7 +129,6 @@ export default {
     return {
       steps: null,
       stepsCount: null,
-      radius: 0,
       angle: 0,
       currentStepValue: 0,
       mousePressed: false,
@@ -181,6 +179,11 @@ export default {
       parts.push(this.cpPathX)
       parts.push(this.cpPathY)
       return parts.join(' ')
+    },
+
+    radius() {
+      let maxCurveWidth = Math.max(this.cpMainCircleStrokeWidth, this.cpPathStrokeWidth)
+      return (this.side / 2) - Math.max(maxCurveWidth, this.cpKnobRadius * 2) / 2
     }
   },
   methods: {
