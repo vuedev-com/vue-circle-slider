@@ -7,8 +7,8 @@
       @mouseup="handleMouseUp"
     >
       <g>
-        <path :stroke="circleColor" fill="none" :stroke-width="cpMainCircleStrokeWidth" :d="cpPathD(cpEndX, cpEndY, 1)"></path>
-        <path :stroke="progressColor" fill="none" :stroke-width="cpPathStrokeWidth" :d="cpPathD(cpPathX, cpPathY, cpPathDirection)"></path>
+        <path :stroke="circleColor" fill="none" :stroke-width="cpMainCircleStrokeWidth" :d="cpPathD(cpStartX, cpStartY, cpEndX, cpEndY, 1, 1)"></path>
+        <path :stroke="progressColor" fill="none" :stroke-width="cpPathStrokeWidth" :d="cpPathD(cpOriginX, cpOriginY, cpPathX, cpPathY, cpPathLongArc, cpPathDirection)"></path>
         <circle :fill="knobColor" :r="cpKnobRadius" :cx="cpPathX" :cy="cpPathY"></circle>
       </g>
     </svg>
@@ -28,6 +28,9 @@ export default {
     this.circleSliderState = new CircleSliderState(this.steps, 0, this.value, this.arcLengthRadians)
     this.angle = this.circleSliderState.angleValue
     this.currentStepValue = this.circleSliderState.currentStep
+
+    this.originValue = this.origin === null ? this.min : this.origin
+    this.originValue = Math.min(this.max, Math.max(this.min, this.originValue))
 
     this.updateFromPropValue(this.value)
   },
@@ -115,6 +118,11 @@ export default {
       type: Number,
       required: false,
       default: 0
+    },
+    origin: {
+      type: Number,
+      required: false,
+      default: null
     }
     // limitMin: {
     //   type: Number,
@@ -129,6 +137,7 @@ export default {
   },
   data () {
     return {
+      originValue: null,
       steps: null,
       stepsCount: null,
       angle: 0,
@@ -153,8 +162,11 @@ export default {
     cpMainCircleStrokeWidth () {
       return this.circleWidth || (this.side / 2) / this.circleWidthRel
     },
-    cpPathDirection () {
+    cpPathLongArc() {
       return (this.cpAngle < Math.PI + this.arcOffsetRadians) ? 0 : 1
+    },
+    cpPathDirection() {
+      return (this.cpAngle < this.cpOriginRadians + this.arcOffsetRadians) ? 0 : 1
     },
     cpStartX() {
       return this.pathX(this.arcOffsetRadians)
@@ -167,6 +179,15 @@ export default {
     },
     cpEndY() {
       return this.pathY((this.arcLengthRadians+this.arcOffsetRadians)*.99999)
+    },
+    cpOriginRadians() {
+      return this.circleSliderState.angleUnit * (this.originValue - this.min)
+    },
+    cpOriginX() {
+      return this.pathX(this.arcOffsetRadians + this.cpOriginRadians)
+    },
+    cpOriginY() {
+      return this.pathY(this.arcOffsetRadians + this.cpOriginRadians)
     },
     cpPathX () {
       return this.cpCenter + this.radius * Math.cos(this.cpAngle)
@@ -193,16 +214,16 @@ export default {
   },
   methods: {
 
-    cpPathD (endX, endY, direction) {
+    cpPathD (startX, startY, endX, endY, longArc, direction) {
       let parts = []
-      parts.push('M' + this.cpStartX)
-      parts.push(this.cpStartY)
+      parts.push('M' + startX)
+      parts.push(startY)
       parts.push('A')
       parts.push(this.radius)
       parts.push(this.radius)
       parts.push(0)
+      parts.push(longArc)
       parts.push(direction)
-      parts.push(1)
       parts.push(endX)
       parts.push(endY)
       return parts.join(' ')

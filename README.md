@@ -90,6 +90,7 @@ or customize some properties:
 | progressWidthRel | Number        | 10       | relative progress curve width. width value in px will be calculated as `(side/2) / progressWidthRel` |
 | arcOffsetDegrees | Number        | 90       | starting position offset in degrees |
 | arcLengthDegrees | Number        | 360      | maximum slider circumference in degrees |
+| origin           | Number        | null     | progress value that represents the starting point for the progress bar (will default to min if null) |
 
 
 ### Events
