@@ -21,7 +21,7 @@ export default class TouchPosition {
   /*
    */
   get sliderAngle () {
-    return (Math.atan2(this.relativeY - this.center, this.relativeX - this.center) + Math.PI * 3 / 2) % (Math.PI * 2)
+    return (Math.atan2(this.relativeY - this.center, this.relativeX - this.center) + 2 * Math.PI) % (Math.PI * 2)
   }
 
   /*
