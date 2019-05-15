@@ -1,7 +1,7 @@
 export default class CircleSliderState {
   /*
    */
-  constructor (steps, offset, initialValue) {
+  constructor (steps, offset, initialValue, maxArcLength) {
     this.steps = steps
     this.offset = offset
     this.currentStepIndex = 0
@@ -14,12 +14,13 @@ export default class CircleSliderState {
     this.firstStep = this.steps[0]
     this.length = this.steps.length - 1
     this.lastStep = this.steps[this.length]
+    this.maxArcLength = maxArcLength
   }
 
   /*
    */
   get angleUnit () {
-    return (Math.PI * 2 - this.offset) / this.length
+    return (this.maxArcLength - this.offset) / this.length
   }
 
   /*
@@ -27,7 +28,7 @@ export default class CircleSliderState {
   get angleValue () {
     return (Math.min(
       this.offset + this.angleUnit * this.currentStepIndex,
-      Math.PI * 2 - Number.EPSILON
+      this.maxArcLength - Number.EPSILON
     )) - 0.00001 // correct for 100% value
   }
 
