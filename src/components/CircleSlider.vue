@@ -7,8 +7,8 @@
       @mouseup="handleMouseUp"
     >
       <g>
-        <circle :stroke="circleColor" fill="none" :stroke-width="cpMainCircleStrokeWidth" :cx="cpCenter" :cy="cpCenter" :r="radius"></circle>
-        <path :stroke="progressColor" fill="none" :stroke-width="cpPathStrokeWidth" :d="cpPathD"></path>
+        <path :stroke="circleColor" fill="none" :stroke-width="cpMainCircleStrokeWidth" :d="cpPathD(cpStartX, cpStartY, cpEndX, cpEndY, 1, 1)"></path>
+        <path :stroke="progressColor" fill="none" :stroke-width="cpPathStrokeWidth" :d="cpPathD(cpOriginX, cpOriginY, cpPathX, cpPathY, cpPathLongArc, cpPathDirection)"></path>
         <circle :fill="knobColor" :r="cpKnobRadius" :cx="cpPathX" :cy="cpPathY"></circle>
       </g>
     </svg>
@@ -25,26 +25,25 @@ export default {
       length: this.stepsCount
     }, (_, i) => this.min + i * this.stepSize)
 
-    this.circleSliderState = new CircleSliderState(this.steps, this.startAngleOffset, this.value)
+    this.circleSliderState = new CircleSliderState(this.steps, 0, this.value, this.arcLengthRadians)
     this.angle = this.circleSliderState.angleValue
     this.currentStepValue = this.circleSliderState.currentStep
 
-    let maxCurveWidth = Math.max(this.cpMainCircleStrokeWidth, this.cpPathStrokeWidth)
-    this.radius = (this.side / 2) - Math.max(maxCurveWidth, this.cpKnobRadius * 2) / 2
+    this.originValue = this.origin === null ? this.min : this.origin
+    this.originValue = Math.min(this.max, Math.max(this.min, this.originValue))
+
     this.updateFromPropValue(this.value)
   },
+
   mounted () {
-    this.touchPosition = new TouchPosition(this.$refs._svg, this.radius, this.radius / 2)
+    this.createTouchPosition()
   },
+
+  updated() {
+    this.createTouchPosition()
+  },
+
   props: {
-    startAngleOffset: {
-      type: Number,
-      required: false,
-      default: function () {
-        // return Math.PI / 20
-        return 0
-      }
-    },
     value: {
       type: Number,
       required: false,
@@ -114,6 +113,21 @@ export default {
       type: Number,
       required: false,
       default: 10
+    },
+    arcLengthDegrees: {
+      type: Number,
+      required: false,
+      default: 360
+    },
+    arcOffsetDegrees: {
+      type: Number,
+      required: false,
+      default: 0
+    },
+    origin: {
+      type: Number,
+      required: false,
+      default: null
     }
     // limitMin: {
     //   type: Number,
@@ -128,9 +142,9 @@ export default {
   },
   data () {
     return {
+      originValue: null,
       steps: null,
       stepsCount: null,
-      radius: 0,
       angle: 0,
       currentStepValue: 0,
       mousePressed: false,
@@ -148,13 +162,37 @@ export default {
       return this.side / 2
     },
     cpAngle () {
-      return this.angle + Math.PI / 2
+      return this.angle + this.arcOffsetRadians
     },
     cpMainCircleStrokeWidth () {
       return this.circleWidth || (this.side / 2) / this.circleWidthRel
     },
-    cpPathDirection () {
-      return (this.cpAngle < 3 / 2 * Math.PI) ? 0 : 1
+    cpPathLongArc() {
+      return (this.cpAngle < Math.PI + this.arcOffsetRadians) ? 0 : 1
+    },
+    cpPathDirection() {
+      return (this.cpAngle < this.cpOriginRadians + this.arcOffsetRadians) ? 0 : 1
+    },
+    cpStartX() {
+      return this.pathX(this.arcOffsetRadians)
+    },
+    cpStartY() {
+      return this.pathY(this.arcOffsetRadians)
+    },
+    cpEndX() {
+      return this.pathX((this.arcLengthRadians+this.arcOffsetRadians)*.99999)
+    },
+    cpEndY() {
+      return this.pathY((this.arcLengthRadians+this.arcOffsetRadians)*.99999)
+    },
+    cpOriginRadians() {
+      return this.circleSliderState.angleUnit * (this.originValue - this.min)
+    },
+    cpOriginX() {
+      return this.pathX(this.arcOffsetRadians + this.cpOriginRadians)
+    },
+    cpOriginY() {
+      return this.pathY(this.arcOffsetRadians + this.cpOriginRadians)
     },
     cpPathX () {
       return this.cpCenter + this.radius * Math.cos(this.cpAngle)
@@ -168,22 +206,46 @@ export default {
     cpKnobRadius () {
       return this.knobRadius || (this.side / 2) / this.knobRadiusRel
     },
-    cpPathD () {
+    radius() {
+      let maxCurveWidth = Math.max(this.cpMainCircleStrokeWidth, this.cpPathStrokeWidth)
+      return (this.side / 2) - Math.max(maxCurveWidth, this.cpKnobRadius * 2) / 2
+    },
+    arcLengthRadians() {
+      return this.arcLengthDegrees * Math.PI * 2 / 360
+    },
+    arcOffsetRadians() {
+      return this.arcOffsetDegrees * Math.PI * 2 / 360
+    }
+  },
+  methods: {
+
+    createTouchPosition() {
+      this.touchPosition = new TouchPosition(this.$refs._svg, this.radius, this.radius / 2)
+    },
+
+    cpPathD (startX, startY, endX, endY, longArc, direction) {
       let parts = []
-      parts.push('M' + this.cpCenter)
-      parts.push(this.cpCenter + this.radius)
+      parts.push('M' + startX)
+      parts.push(startY)
       parts.push('A')
       parts.push(this.radius)
       parts.push(this.radius)
       parts.push(0)
-      parts.push(this.cpPathDirection)
-      parts.push(1)
-      parts.push(this.cpPathX)
-      parts.push(this.cpPathY)
+      parts.push(longArc)
+      parts.push(direction)
+      parts.push(endX)
+      parts.push(endY)
       return parts.join(' ')
-    }
-  },
-  methods: {
+    },
+
+    pathX (angle) {
+      return this.cpCenter + this.radius * Math.cos(angle)
+    },
+
+    pathY (angle) {
+      return this.cpCenter + this.radius * Math.sin(angle)
+    },
+
     /*
      */
     fitToStep (val) {
@@ -195,7 +257,7 @@ export default {
     handleClick (e) {
       this.touchPosition.setNewPosition(e)
       if (this.touchPosition.isTouchWithinSliderRange) {
-        const newAngle = this.touchPosition.sliderAngle
+        const newAngle = this.calculateAngle()
         this.animateSlider(this.angle, newAngle)
       }
     },
@@ -250,6 +312,11 @@ export default {
       }
     },
 
+    calculateAngle() {
+      const angle = (this.touchPosition.sliderAngle - this.arcOffsetRadians + Math.PI * 2) % (Math.PI * 2)
+      return angle
+    },
+
     /*
      */
     updateAngle (angle) {
@@ -274,9 +341,9 @@ export default {
     /*
      */
     updateSlider () {
-      const angle = this.touchPosition.sliderAngle
-      if (Math.abs(angle - this.angle) < Math.PI) {
-        this.updateAngle(angle)
+      const angle = this.calculateAngle()
+      if (Math.abs(this.angle - angle) < Math.PI) {
+        this.updateAngle(Math.max( 0, Math.min(angle, this.arcLengthRadians)))
       }
     },
 
