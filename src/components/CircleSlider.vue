@@ -36,8 +36,13 @@ export default {
   },
 
   mounted () {
-    this.touchPosition = new TouchPosition(this.$refs._svg, this.radius, this.radius / 2)
+    this.createTouchPosition()
   },
+
+  updated() {
+    this.createTouchPosition()
+  },
+
   props: {
     value: {
       type: Number,
@@ -214,6 +219,10 @@ export default {
   },
   methods: {
 
+    createTouchPosition() {
+      this.touchPosition = new TouchPosition(this.$refs._svg, this.radius, this.radius / 2)
+    },
+
     cpPathD (startX, startY, endX, endY, longArc, direction) {
       let parts = []
       parts.push('M' + startX)
@@ -248,7 +257,7 @@ export default {
     handleClick (e) {
       this.touchPosition.setNewPosition(e)
       if (this.touchPosition.isTouchWithinSliderRange) {
-        const newAngle = this.touchPosition.sliderAngle
+        const newAngle = this.calculateAngle()
         this.animateSlider(this.angle, newAngle)
       }
     },
@@ -303,6 +312,11 @@ export default {
       }
     },
 
+    calculateAngle() {
+      const angle = (this.touchPosition.sliderAngle - this.arcOffsetRadians + Math.PI * 2) % (Math.PI * 2)
+      return angle
+    },
+
     /*
      */
     updateAngle (angle) {
@@ -327,7 +341,7 @@ export default {
     /*
      */
     updateSlider () {
-      const angle = (this.touchPosition.sliderAngle - this.arcOffsetRadians + Math.PI * 2) % (Math.PI * 2)
+      const angle = this.calculateAngle()
       if (Math.abs(this.angle - angle) < Math.PI) {
         this.updateAngle(Math.max( 0, Math.min(angle, this.arcLengthRadians)))
       }
