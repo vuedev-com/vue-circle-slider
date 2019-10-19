@@ -20,14 +20,24 @@ import CircleSliderState from '../modules/circle_slider_state.js'
 export default {
   name: 'CircleSlider',
   created () {
-    this.stepsCount = 1 + (this.max - this.min) / this.stepSize
+    this.currentMin = this.min;
+    this.currentMax = this.max;
+    if(this.infinite) {
+      this.currentMin = this.value - 5;
+      this.currentMax = this.value + 5;
+    }
+
+    this.stepsCount = 1 + (this.currentMax - this.currentMin) / this.stepSize
     this.steps = Array.from({
       length: this.stepsCount
-    }, (_, i) => this.min + i * this.stepSize)
+    }, (_, i) => this.currentMin + i * this.stepSize)
 
     this.circleSliderState = new CircleSliderState(this.steps, this.startAngleOffset, this.value)
     this.angle = this.circleSliderState.angleValue
     this.currentStepValue = this.circleSliderState.currentStep
+
+    this.lastStepValue = this.currentStepValue;
+    this.infiniteValue = this.currentStepValue;
 
     let maxCurveWidth = Math.max(this.cpMainCircleStrokeWidth, this.cpPathStrokeWidth)
     this.radius = (this.side / 2) - Math.max(maxCurveWidth, this.cpKnobRadius * 2) / 2
@@ -114,6 +124,10 @@ export default {
       type: Number,
       required: false,
       default: 10
+    },
+    infinite: {
+      type: Boolean,
+      default: false,
     }
     // limitMin: {
     //   type: Number,
@@ -135,7 +149,12 @@ export default {
       currentStepValue: 0,
       mousePressed: false,
       circleSliderState: null,
-      mousemoveTicks: 0
+      mousemoveTicks: 0,
+      currentMin: this.min,
+      currentMax: this.max,
+      canChangeLimit: true,
+      lastStepValue: 0,
+      infiniteValue: 0,
     }
   },
   computed: {
@@ -275,7 +294,7 @@ export default {
      */
     updateSlider () {
       const angle = this.touchPosition.sliderAngle
-      if (Math.abs(angle - this.angle) < Math.PI) {
+      if (Math.abs(angle - this.angle) < Math.PI || this.infinite) {
         this.updateAngle(angle)
       }
     },
@@ -302,6 +321,27 @@ export default {
   watch: {
     value (val) {
       this.updateFromPropValue(val)
+    },
+    currentStepValue(val) { // Check current step against last step to determine is user is advancing or reverting the slider
+      if(val !== this.lastStepValue && this.infinite) {
+        if(val > this.lastStepValue) {
+          if(val === this.currentMax && this.lastStepValue === this.currentMin) { // user reverted
+            if(this.infiniteValue > this.min)
+              this.infiniteValue -= this.stepSize;
+          } else {
+            this.infiniteValue += this.stepSize;
+          }
+        } else if (val < this.lastStepValue) {
+          if(val === this.currentMin && this.lastStepValue === this.currentMax) { // user advanced
+            this.infiniteValue += this.stepSize;
+          } else {
+            if(this.infiniteValue > this.min)
+              this.infiniteValue -= this.stepSize;
+          }
+        }
+        this.$emit('infiniteValue', this.infiniteValue);
+        this.lastStepValue = val;
+      }
     }
   }
 }
